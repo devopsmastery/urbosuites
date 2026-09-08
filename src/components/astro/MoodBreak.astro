@@ -1,0 +1,55 @@
+---
+/**
+ * MoodBreak.astro
+ * Full-bleed atmospheric section — "Chai. Clouds. Complete quiet."
+ * Background: Terrace-2.jpg from Hillcrest (covered terrace with Pune cityscape view).
+ */
+const hillcrestModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../../assets/suites/hillcrest/*',
+  { eager: true }
+);
+
+const sortedHillcrest = Object.entries(hillcrestModules)
+  .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+  .map(([, m]) => m.default);
+
+// Use terrace image for the mood section (not the hero balcony)
+const bgImage = sortedHillcrest.find(img => /terrace/i.test(img.src)) ?? sortedHillcrest[sortedHillcrest.length - 1];
+---
+
+<section class="relative py-36 overflow-hidden" aria-label="Property atmosphere">
+  <!-- Background image -->
+  {bgImage && (
+    <img
+      src={bgImage.src}
+      alt="Terrace view overlooking the serene hills of Pashan Pune"
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="lazy"
+      decoding="async"
+      width={bgImage.width}
+      height={bgImage.height}
+    />
+  )}
+
+  <!-- Dark overlay -->
+  <div
+    class="absolute inset-0"
+    style="background: linear-gradient(to bottom, rgba(26,39,68,0.55) 0%, rgba(26,39,68,0.65) 100%);"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Content -->
+  <div class="relative z-10 max-w-3xl mx-auto text-center px-6">
+    <p class="label-accent mb-4">The view that sells it</p>
+    <h2
+      class="text-white text-4xl md:text-6xl font-bold mb-6 leading-tight"
+      style="font-family: var(--font-display);"
+    >
+      Chai. Clouds.<br />Complete quiet.
+    </h2>
+    <p class="text-base leading-relaxed max-w-lg mx-auto" style="color: rgba(255,255,255,0.7);">
+      Step onto your private terrace and you're looking at open sky and greens —
+      no concrete, no noise. We leave everything you need to make your first cup.
+    </p>
+  </div>
+</section>

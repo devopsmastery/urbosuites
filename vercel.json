@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/sync-ics",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/expire-soft-blocks",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

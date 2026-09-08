@@ -1,0 +1,404 @@
+@import "tailwindcss";
+
+/* ================================================================
+   UrboSuites Design System — Luxury Urban Rental
+   Palette: Deep navy (#1A2744) × Warm gold (#C9A227) × Off-white (#F9F8F6)
+   Typography: Raleway (display) + Inter (body)
+   Reference: Full-Website-Template.jpg
+================================================================ */
+
+@theme {
+  /* ── Primary Palette ─────────────────────────────────────── */
+  --color-primary:          #1A2744;   /* Deep navy — nav, footer, dark sections */
+  --color-primary-light:    #263660;   /* Lighter navy — hover states */
+  --color-primary-overlay:  rgba(26, 39, 68, 0.96);  /* Nav glass effect */
+
+  --color-accent:           #C9A227;   /* Warm gold — CTAs, highlights, icons */
+  --color-accent-light:     #E2BC50;   /* Lighter gold — hover states */
+  --color-accent-foreground: #1A2744;  /* Text on gold buttons */
+
+  /* ── Backgrounds ─────────────────────────────────────────── */
+  --color-background:       #F9F8F6;   /* Warm off-white — page base */
+  --color-card:             #FFFFFF;   /* Pure white — amenity/review cards */
+  --color-secondary:        #EEF0F5;   /* Cool grey — alternate section bg */
+  --color-secondary-dark:   #DDE0E8;   /* Slightly darker alternate bg */
+
+  /* ── Foregrounds ─────────────────────────────────────────── */
+  --color-foreground:       #111827;   /* Near-black — primary text */
+  --color-muted-foreground: #6B7280;   /* Grey — secondary / caption text */
+  --color-border:           #E5E7EB;   /* Light grey border */
+  --color-border-dark:      #D1D5DB;   /* Slightly darker dividers */
+
+  /* ── Status & Feedback ───────────────────────────────────── */
+  --color-success:          #2D6A4F;   /* Forest green — "Panoramic view" tags */
+  --color-error:            #DC2626;   /* Red — form validation */
+  --color-warning:          #D97706;   /* Amber — soft warnings */
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-display: "Raleway", "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ================================================================
+   Base Layer — Global Resets & Defaults
+================================================================ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings use Raleway display font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-foreground);
+  }
+
+  /* Selection highlight — gold accent */
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+
+  /* Focus ring — gold accent for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Remove default button styles */
+  button {
+    cursor: pointer;
+  }
+
+  /* Remove default list styles */
+  ul, ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Smooth image rendering */
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ================================================================
+   Utility Classes — UrboSuites Specific Components
+================================================================ */
+
+/* ── Accent Label (e.g. "Studio Apartment · Pune") ─────────── */
+.label-accent {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;   /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* ── Section Heading ─────────────────────────────────────────── */
+.heading-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+}
+
+.heading-xl-white {
+  color: #FFFFFF;
+}
+
+/* ── Gold "Book Now" CTA Button ──────────────────────────────── */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8125rem;   /* 13px */
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.75rem;
+  text-decoration: none;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.btn-gold:hover,
+.btn-gold:focus-visible {
+  background-color: #FFFFFF;
+  color: var(--color-primary);
+  outline-color: var(--color-primary);
+}
+
+/* ── Ghost Button (outline) ──────────────────────────────────── */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  padding: 0.75rem 1.75rem;
+  text-decoration: none;
+  transition: border-color 200ms ease;
+}
+
+.btn-ghost:hover {
+  border-color: #FFFFFF;
+}
+
+/* ── Spec Badge — gold left-border detail cards ──────────────── */
+.spec-badge {
+  border-left: 2px solid var(--color-accent);
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spec-badge__label {
+  font-size: 0.625rem;    /* 10px */
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.spec-badge__value {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+/* ── Image containers — strict aspect ratios for zero CLS ────── */
+.aspect-hero {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-card {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* ── Gallery grid items — consistent overflow handling ───────── */
+.gallery-item {
+  overflow: hidden;
+  background-color: var(--color-secondary);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+/* ── Review cards — glassmorphism on navy ────────────────────── */
+.review-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: background-color 200ms ease;
+}
+
+.review-card:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Amenity card — white card with hover lift ───────────────── */
+.amenity-card {
+  background-color: var(--color-card);
+  border: 1px solid rgba(17, 24, 39, 0.07);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  cursor: default;
+}
+
+.amenity-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.08);
+}
+
+/* ── Floating price chip ─────────────────────────────────────── */
+.price-chip {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(17, 24, 39, 0.18);
+}
+
+/* ── Suite metric stat (under hero) ─────────────────────────── */
+.metric-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-stat__value {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.metric-stat__label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Input field ─────────────────────────────────────────────── */
+.input-field {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  outline: none;
+  transition: border-color 200ms ease;
+  width: 100%;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+}
+
+/* ── Form label ──────────────────────────────────────────────── */
+.form-label {
+  font-size: 0.625rem;    /* 10px */
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Scrollbar styling (webkit) ──────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* ── About Prose — Editorial Typography for Suite Descriptions ── */
+.about-prose {
+  max-width: 100%;
+}
+
+.about-prose p {
+  font-size: 1.0625rem !important;  /* 17px reading size */
+  line-height: 1.95 !important;     /* generous luxury leading */
+  color: #1F2937 !important;        /* deep charcoal for crystal-clear readability */
+  margin-top: 0 !important;
+  margin-bottom: 1.85rem !important; /* 30px breathing room between paragraphs */
+  letter-spacing: -0.01em;
+}
+
+.about-prose p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.about-prose strong {
+  color: var(--color-primary) !important; /* deep navy for bold emphasis */
+  font-weight: 700;
+}
+
+/* ── LUXURY GOLDEN-EDGED CARD for "Good to know:" / "Practical details:" ── */
+.about-prose p:has(strong:first-child),
+.about-prose .prose-callout-gold,
+.about-prose blockquote {
+  position: relative;
+  background: linear-gradient(135deg, #FFFDF8 0%, #FAF5EA 100%) !important; /* warm champagne cream */
+  border: 1.5px solid #E4CD83 !important;                                    /* warm gold outline */
+  border-left: 6px solid #C9A227 !important;                                 /* prominent solid Urbo gold bar */
+  border-radius: 14px !important;
+  padding: 1.5rem 1.85rem !important;
+  margin-top: 2.75rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: 0 8px 30px -4px rgba(201, 162, 39, 0.14), 0 2px 8px -2px rgba(0, 0, 0, 0.04) !important;
+  color: #2D3748 !important;                                                 /* rich dark charcoal text */
+  line-height: 1.85 !important;
+}
+
+.about-prose p:has(strong:first-child) strong:first-child,
+.about-prose .prose-callout-gold strong:first-child {
+  display: block;                                                           /* clean headline line */
+  color: var(--color-primary) !important;                                   /* Urbo navy */
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.45rem;
+  font-family: var(--font-display);
+}
+

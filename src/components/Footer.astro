@@ -1,0 +1,39 @@
+---
+import Icon from './Icon.astro';
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-hearth text-cream mt-24">
+  <div class="max-w-6xl mx-auto px-5 py-14 grid gap-10 md:grid-cols-3">
+    <div>
+      <p class="font-display text-lg mb-3">Cabin &amp; Creek</p>
+      <p class="text-sm text-cream/70 leading-relaxed">
+        A handful of places we look after ourselves — replace this line
+        with your own story.
+      </p>
+    </div>
+
+    <div class="text-sm space-y-2.5">
+      <p class="font-mono uppercase tracking-wide text-cream/50 text-xs mb-1">Reach us</p>
+      <a href="mailto:stay@example.com" class="flex items-center gap-2 text-cream/90 hover:text-ember-light w-fit">
+        <Icon name="mail" class="w-4 h-4" /> stay@example.com
+      </a>
+      <a href="tel:+15555550123" class="flex items-center gap-2 text-cream/90 hover:text-ember-light w-fit">
+        <Icon name="phone" class="w-4 h-4" /> (555) 555-0123
+      </a>
+    </div>
+
+    <div class="text-sm space-y-2.5">
+      <p class="font-mono uppercase tracking-wide text-cream/50 text-xs mb-1">Find your way</p>
+      <a href="/properties" class="block text-cream/90 hover:text-ember-light w-fit">All properties</a>
+      <a href="/about" class="block text-cream/90 hover:text-ember-light w-fit">About us</a>
+      <a href="/contact" class="block text-cream/90 hover:text-ember-light w-fit">Contact</a>
+    </div>
+  </div>
+
+  <div class="border-t border-line-dark">
+    <p class="max-w-6xl mx-auto px-5 py-4 text-xs text-cream/50 font-mono">
+      &copy; {year} Cabin &amp; Creek &middot; replace this footer with your own details
+    </p>
+  </div>
+</footer>

@@ -1,0 +1,104 @@
+---
+/**
+ * Footer.astro
+ * 3-column footer: brand summary | nav links | contact + map link.
+ */
+import { BRAND, CONTACT, ADDRESS, NAV_LINKS } from '../../lib/constants';
+---
+
+<footer style="background: var(--color-primary);" class="text-white px-6 md:px-10 pt-14 pb-8">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 mb-10">
+
+    <!-- Brand column -->
+    <div>
+      <p class="text-xl font-bold tracking-widest mb-3" style="font-family: var(--font-display);">
+        URBO<span style="color: var(--color-accent);">SUITES</span>
+      </p>
+      <p class="text-sm leading-relaxed" style="color: rgba(255,255,255,0.5);">
+        Premium studio apartments at VJ IndiLife, Pashan, Pune —
+        available for short and extended stays. Book directly and skip the platform fees.
+      </p>
+    </div>
+
+    <!-- Navigation column -->
+    <div>
+      <p class="text-[10px] tracking-[0.18em] uppercase mb-4" style="color: rgba(255,255,255,0.4);">
+        Navigate
+      </p>
+      <ul class="flex flex-col gap-2">
+        {NAV_LINKS.map(link => (
+          <li>
+            <a
+              href={link.href}
+              class="text-sm transition-colors duration-200 hover:text-white"
+              style="color: rgba(255,255,255,0.6);"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <!-- Contact column -->
+    <div>
+      <p class="text-[10px] tracking-[0.18em] uppercase mb-4" style="color: rgba(255,255,255,0.4);">
+        Find us
+      </p>
+      <ul class="flex flex-col gap-3">
+        <!-- Address -->
+        <li class="flex items-start gap-2 text-sm" style="color: rgba(255,255,255,0.6);">
+          <svg class="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <a href={ADDRESS.mapsUrl} target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">
+            {ADDRESS.building}<br />{ADDRESS.road}, {ADDRESS.locality}<br />{ADDRESS.city}
+          </a>
+        </li>
+        <!-- Phone -->
+        <li>
+          <a
+            href={CONTACT.phoneTel}
+            class="flex items-center gap-2 text-sm transition-colors duration-200 hover:text-white"
+            style="color: rgba(255,255,255,0.6);"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1.23h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            {CONTACT.phone}
+          </a>
+        </li>
+        <!-- Email -->
+        <li>
+          <a
+            href={CONTACT.emailHref}
+            class="flex items-center gap-2 text-sm transition-colors duration-200 hover:text-white"
+            style="color: rgba(255,255,255,0.6);"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            {CONTACT.email}
+          </a>
+        </li>
+        <!-- Instagram -->
+        <li>
+          <a
+            href={CONTACT.instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-2 text-sm transition-colors duration-200 hover:text-white"
+            style="color: rgba(255,255,255,0.6);"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+            {CONTACT.instagram}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Bottom bar -->
+  <div
+    class="max-w-6xl mx-auto pt-6 flex flex-col md:flex-row items-center justify-between gap-2 text-xs"
+    style="border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.3);"
+  >
+    <span>© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</span>
+    <span>Privacy Policy · Cancellation Policy</span>
+  </div>
+</footer>

@@ -1,0 +1,52 @@
+---
+import Icon from './Icon.astro';
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/properties', label: 'Properties' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+const path = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-50 bg-hearth text-cream border-b border-line-dark">
+  <input type="checkbox" id="nav-toggle" class="peer hidden" />
+
+  <div class="max-w-6xl mx-auto px-5 flex items-center justify-between h-16">
+    <a href="/" class="font-display text-xl">Cabin &amp; Creek</a>
+
+    <nav class="hidden md:flex items-center gap-8 text-sm" aria-label="Primary">
+      {links.map((l) => (
+        <a
+          href={l.href}
+          class:list={[
+            'transition-colors hover:text-ember-light',
+            path === l.href ? 'text-ember-light' : 'text-cream/90',
+          ]}
+        >
+          {l.label}
+        </a>
+      ))}
+    </nav>
+
+    <label
+      for="nav-toggle"
+      class="md:hidden cursor-pointer p-2 -mr-2"
+      aria-label="Toggle menu"
+    >
+      <Icon name="menu" class="w-6 h-6" />
+    </label>
+  </div>
+
+  <nav
+    class="md:hidden hidden peer-checked:flex flex-col gap-1 px-5 pb-4 text-sm border-t border-line-dark"
+    aria-label="Primary mobile"
+  >
+    {links.map((l) => (
+      <a href={l.href} class="py-2.5 text-cream/90 hover:text-ember-light">
+        {l.label}
+      </a>
+    ))}
+  </nav>
+</header>

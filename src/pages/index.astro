@@ -1,0 +1,868 @@
+---
+/**
+ * src/pages/index.astro — UrboSuites Homepage
+ *
+ * Full UI/UX Implementation:
+ * 1. Hero: High-contrast balcony & Sahyadri hill view with dual gradient overlay
+ * 2. QuickMetrics: Key studio specs
+ * 3. Our Suites: Hillcrest (Suite 201) first, Gulmohar (Suite 101) with bed hero
+ * 4. Facilities: Categorized into Building/Entrance first, then Gym (all 8 photos together),
+ *    Cafeteria/Workspaces, and Terraces. Includes interactive category filter tabs.
+ * 5. Mood Break: "Chai. Clouds. Complete quiet."
+ * 6. About the Studio: "Designed for people who notice details" with generous spacing
+ * 7. Amenities: 12-item luxury grid with gold icons
+ * 8. Reviews: Powered by src/data/testimonials.ts
+ * 9. Book: Inquiry form with live total and Google Maps
+ * 10. Footer: Contact, navigation, and location
+ */
+import Layout from '../layouts/Layout.astro';
+import GlobalNav from '../components/astro/GlobalNav.astro';
+import QuickMetrics from '../components/astro/QuickMetrics.astro';
+import MoodBreak from '../components/astro/MoodBreak.astro';
+import AmenitiesMatrix from '../components/astro/AmenitiesMatrix.astro';
+import ReviewsSection from '../components/astro/ReviewsSection.astro';
+import FaqSection from '../components/astro/FaqSection.astro';
+import Footer from '../components/astro/Footer.astro';
+import SuitePhotoSlider from '../components/react/SuitePhotoSlider';
+import BookingWidget from '../components/react/BookingWidget';
+import MobileStickyBar from '../components/react/MobileStickyBar';
+import { getCollection } from 'astro:content';
+import { CONTACT, ADDRESS } from '../lib/constants';
+import { getLodgingBusinessSchema, getFaqSchema } from '../lib/seo';
+
+// ── Dynamic image imports (auto-discovers new files at build/dev time) ─
+const hillcrestModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/suites/hillcrest/*',
+  { eager: true }
+);
+const gulmoharModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/suites/gulmohar/*',
+  { eager: true }
+);
+const amenityModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/amenities/*',
+  { eager: true }
+);
+
+function sortedImages(modules: Record<string, { default: ImageMetadata }>): ImageMetadata[] {
+  return Object.entries(modules)
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+    .map(([, m]) => m.default);
+}
+
+const hillcrestImages = sortedImages(hillcrestModules);
+const gulmoharImages  = sortedImages(gulmoharModules);
+
+// Hero image: Balcony with chai cups overlooking green misty hills (01-Balcony-withTeacups-Final.png)
+const heroImg = hillcrestImages[0];
+
+// ── Facility images grouped by module path (bulletproof matching) ──
+interface FacilityItem {
+  name: string;
+  img: ImageMetadata;
+}
+
+const amenityEntries = Object.entries(amenityModules).map(([path, mod]) => {
+  const rawFilename = path.split('/').pop()?.replace(/\.[^.]+$/, '') || '';
+  const cleanName = rawFilename
+    .replace(/^(\d+[-_]?)/, '')                  // remove leading sorting numbers (e.g. 01-)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')          // split CamelCase: GrandEntrance -> Grand Entrance
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')    // handle acronyms: GYMArea -> GYM Area
+    .replace(/terrage/gi, 'Terrace')              // autocorrect typo
+    .replace(/[-_]/g, ' ')                       // hyphens/underscores to spaces
+    .replace(/\s+/g, ' ')                        // collapse double spaces
+    .trim();
+  return {
+    path: path.toLowerCase(),
+    filename: rawFilename.toLowerCase(),
+    cleanName,
+    img: mod.default,
+  };
+});
+
+// Category 1: Building Exterior & Grand Entrance (3 photos, dedicated 3-column layout)
+const exteriorOrder = [
+  { key: 'exterior-grandentrance', name: 'Grand Entrance & Landscaped Driveway' },
+  { key: 'exterior-building facade', name: 'High-Rise Architectural Facade' },
+  { key: 'exterior-building', name: 'VJ IndiLife Community Overview' },
+];
+const exteriorImages: FacilityItem[] = exteriorOrder
+  .map(target => {
+    const found = amenityEntries.find(e => e.filename === target.key);
+    return found ? { name: target.name, img: found.img } : null;
+  })
+  .filter((item): item is FacilityItem => Boolean(item));
+
+// Category 2: Gym & Fitness (5 photos, 1-Hero + 4-Card Bento layout)
+const gymOrder = [
+  { key: 'gym.png', name: 'Fitness Center & Cardio Overview' },
+  { key: 'open-gym', name: 'Podium Open-Air Fitness Deck' },
+  { key: 'gym-bench press', name: 'Commercial Bench Press & Racks' },
+  { key: 'gym-cross training machine', name: 'Cross Trainer & Aerobics' },
+  { key: 'gym-bicycles', name: 'Spin Bikes & Endurance Area' },
+];
+const gymImages: FacilityItem[] = gymOrder
+  .map(target => {
+    const found = amenityEntries.find(e => e.filename.includes(target.key) || e.path.includes(target.key));
+    return found ? { name: target.name, img: found.img } : null;
+  })
+  .filter((item): item is FacilityItem => Boolean(item));
+
+// Category 3: Cafeteria, Meeting Rooms & Facilities (Curated 5 photos, 1-Hero + 4-Card Bento layout, mirrors Terrace)
+const cafeOrder = [
+  { key: 'cafeteria-1stfloor', name: 'Resident Cafeteria (1st Floor)' },
+  { key: 'meetingroom-1stfloor', name: 'Meeting & Work Room (1st Floor)' },
+  { key: 'lobby-waiting area', name: 'Grand Lobby & Reception Lounge' },
+  { key: 'lobby-hangout', name: 'Resident Lounge & Hangout' },
+  { key: 'laundromat-basement', name: 'Basement Laundromat' },
+];
+const cafeteriaImages: FacilityItem[] = cafeOrder
+  .map(target => {
+    const found = amenityEntries.find(e => e.filename === target.key || e.path.includes(target.key));
+    return found ? { name: target.name, img: found.img } : null;
+  })
+  .filter((item): item is FacilityItem => Boolean(item));
+
+// Category 4: Rooftop Terraces (Curated 5 photos, 1-Hero + 4-Card Bento layout)
+const terraceOrder = [
+  { key: 'terrage-largedeck', name: 'Rooftop Observation Deck' },
+  { key: 'terrage-mountainview', name: 'Panoramic Sahyadri Mountain View' },
+  { key: 'terrace-garden', name: 'Sky Garden & Landscaped Lawn' },
+  { key: 'terrace-yoga deck', name: 'Sunrise Yoga & Meditation Deck' },
+  { key: 'terrace-view from top', name: '360° Valley Panorama' },
+];
+const terraceImages: FacilityItem[] = terraceOrder
+  .map(target => {
+    const found = amenityEntries.find(e => e.filename === target.key || e.path.includes(target.key));
+    return found ? { name: target.name, img: found.img } : null;
+  })
+  .filter((item): item is FacilityItem => Boolean(item));
+
+const facilitySections = [
+  {
+    id: 'cat-exterior',
+    tag: 'ARCHITECTURE & ARRIVAL',
+    title: 'Building Exterior & Grand Entrance',
+    description: 'Secure gated community at VJ IndiLife with landscaped driveway, covered parking, and 24/7 manned security.',
+    layout: 'grid-3' as const,
+    items: exteriorImages,
+  },
+  {
+    id: 'cat-gym',
+    tag: 'FITNESS & WELLNESS',
+    title: 'Fully Equipped Gym & Workout Deck',
+    description: 'State-of-the-art fitness center with commercial cardio equipment, dedicated free weights zone, and open-air stretching area.',
+    layout: 'bento-5' as const,
+    items: gymImages,
+  },
+  {
+    id: 'cat-cafe',
+    tag: 'SPACES & PRODUCTIVITY',
+    title: 'Cafeteria, Meeting Rooms & Facilities',
+    description: 'Ground & 1st floor amenities including resident café, quiet meeting rooms, resident lounge, and basement laundromat.',
+    layout: 'bento-5' as const,
+    items: cafeteriaImages,
+  },
+  {
+    id: 'cat-terrace',
+    tag: 'PANORAMIC VIEWS',
+    title: 'Rooftop Terrace & Sun Deck',
+    description: 'Expansive open terrace with shaded gazebos, seating zones, and sweeping 360° views across the Sahyadri mountains.',
+    layout: 'bento-5' as const,
+    items: terraceImages,
+  },
+];
+
+const totalFacilityPhotos = facilitySections.reduce((acc, s) => acc + s.items.length, 0);
+
+// ── Suites Collection ─────────────────────────────────────────
+const allSuites = await getCollection('properties', e => e.data.isActive);
+const suites = allSuites.sort((a, b) => a.data.order - b.data.order);
+
+const suiteImageMap: Record<string, ImageMetadata[]> = {
+  hillcrest: hillcrestImages,
+  gulmohar:  gulmoharImages,
+};
+
+function serializeImages(imgs: ImageMetadata[]) {
+  return imgs.map(img => ({ src: img.src, width: img.width, height: img.height, format: img.format }));
+}
+
+const suitesForWidget = suites.map(s => ({
+  slug: s.id,
+  title: s.data.title,
+  pricePerNight: s.data.pricePerNight,
+}));
+
+const startingPrice = `₹${Math.min(...suites.map(s => s.data.pricePerNight)).toLocaleString('en-IN')}`;
+
+const StarSVG = `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`;
+
+const lodgingSchema = getLodgingBusinessSchema();
+const faqSchema = getFaqSchema();
+---
+
+<Layout
+  title="Home"
+  description="UrboSuites offers luxury studio serviced apartments at VJ IndiLife, Pashan Sus Road, Pune. Features 100Mbps Wi-Fi, Sahyadri mountain views, gym, cafeteria, and zero-fee direct booking."
+  keywords="UrboSuites, UrboSuites Pashan, UrboSuites Pune, VJ IndiLife Pashan, studio apartment in Pashan Pune, luxury Airbnb Pashan, serviced apartments Pashan Sus Road, homestay near Hinjewadi, workation Pune with mountain view, UrboSuites booking, Hillcrest Suite Pune, Gulmohar Suite Pune"
+  schemas={[lodgingSchema, faqSchema]}
+>
+  <link slot="head-preload" rel="preload" as="image" href={heroImg.src} />
+
+  <GlobalNav />
+
+  <!-- ════════════════════════════════════════════════════════
+       1. HERO — High Contrast & Emotionally Resonant
+  ═══════════════════════════════════════════════════════════ -->
+  <section
+    class="relative flex items-end overflow-hidden"
+    style="height: 100svh; min-height: 640px;"
+    aria-label="Welcome to UrboSuites"
+  >
+    <!-- Background Hero Photo: Balcony with Tea Cups overlooking vibrant green hills -->
+    <img
+      src={heroImg.src}
+      alt="UrboSuites private balcony overlooking lush green Sahyadri hills in Pashan, Pune"
+      class="absolute inset-0 w-full h-full object-cover object-center"
+      loading="eager"
+      fetchpriority="high"
+      width={heroImg.width}
+      height={heroImg.height}
+    />
+
+    <!--
+      UI/UX Designer Multi-Layer Gradient:
+      1. Dark navy wash on the left to guarantee 100% white/gold text readability
+      2. Bottom gradient providing solid ground for CTAs and metrics
+    -->
+    <div
+      class="absolute inset-0"
+      style="background: linear-gradient(to right, rgba(13,22,43,0.92) 0%, rgba(13,22,43,0.72) 42%, rgba(13,22,43,0.25) 100%);"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0"
+      style="background: linear-gradient(to top, rgba(13,22,43,0.95) 0%, rgba(13,22,43,0.35) 45%, transparent 100%);"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Hero Content -->
+    <div class="relative z-10 px-6 md:px-14 pb-20 md:pb-28 max-w-3xl w-full">
+      <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full mb-6 border border-white/20 bg-white/10 backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full" style="background: var(--color-accent);"></span>
+        <span class="text-xs font-semibold tracking-widest uppercase text-white/90" style="font-family: var(--font-display);">
+          Studio Apartments · Pashan, Pune
+        </span>
+      </div>
+
+      <h1
+        class="font-bold leading-[1.05] mb-6 text-white"
+        style="font-family: var(--font-display); font-size: clamp(2.6rem, 6.2vw, 4.8rem); text-shadow: 0 4px 24px rgba(0,0,0,0.45);"
+      >
+        Urban living.<br />
+        <span style="color: var(--color-accent); text-shadow: 0 2px 20px rgba(201,162,39,0.35);">Forest views.</span>
+      </h1>
+
+      <p class="text-base md:text-lg leading-relaxed max-w-xl mb-10 text-white/90" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+        A smartly designed studio at VJ IndiLife, Pashan. Step onto your private balcony with steaming chai,
+        surrounded by quiet hills, 100Mbps Wi-Fi, full kitchen, and 24/7 security.
+      </p>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="#book" class="btn-gold shadow-lg shadow-yellow-900/20">
+          Check Availability
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#gallery" class="btn-ghost backdrop-blur-sm">View Facilities</a>
+      </div>
+    </div>
+
+    <!-- Floating Price & Rating Chip -->
+    <div
+      class="price-chip absolute bottom-20 md:bottom-28 right-6 md:right-14 hidden sm:block p-5 rounded-xl border border-white/30 shadow-2xl"
+      style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(14px);"
+    >
+      <p class="text-[11px] tracking-[0.18em] uppercase font-semibold mb-1" style="color: var(--color-muted-foreground);">
+        Direct Booking From
+      </p>
+      <p class="text-3xl font-bold" style="font-family: var(--font-display); color: var(--color-primary);">
+        ₹2,399<span class="text-sm font-normal text-gray-500"> / night</span>
+      </p>
+      <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-200">
+        <div class="flex gap-0.5">
+          {Array.from({ length: 5 }).map(() => (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#C9A227" stroke="none" aria-hidden="true">
+              <Fragment set:html={StarSVG} />
+            </svg>
+          ))}
+        </div>
+        <span class="text-xs font-semibold text-gray-700">4.95 · 84+ verified stays</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       2. QUICK METRICS
+  ═══════════════════════════════════════════════════════════ -->
+  <QuickMetrics />
+
+  <!-- ════════════════════════════════════════════════════════
+       3. OUR SUITES (Hillcrest 201 First, Gulmohar 101 Second)
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="suites" class="py-20 px-6 md:px-10 max-w-6xl mx-auto" aria-labelledby="suites-heading">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+      <div>
+        <p class="label-accent mb-2">VJ IndiLife, Pashan · Pune</p>
+        <h2 id="suites-heading" class="heading-xl">Our suites</h2>
+        <p class="text-sm text-gray-500 mt-2 max-w-lg">
+          Both suites feature super king beds, dedicated workspaces, smart TV, full kitchen, and unblocked views.
+        </p>
+      </div>
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-gray-600 self-start md:self-auto">
+        {suites.length} Suites Available
+      </span>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-8">
+      {suites.map(suite => {
+        const imgs = suiteImageMap[suite.id] ?? [];
+        const serialized = serializeImages(imgs);
+        return (
+          <article class="flex flex-col gap-3 group bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <SuitePhotoSlider client:idle photos={serialized} suiteName={suite.data.title} />
+
+            <div class="flex flex-col gap-1.5 px-1 pt-2">
+              <div class="flex items-start justify-between gap-2">
+                <h3 class="font-bold text-lg leading-tight" style="font-family: var(--font-display); color: var(--color-foreground);">
+                  {suite.data.title}
+                </h3>
+                <div class="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded bg-amber-50 border border-amber-200">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#C9A227" stroke="none" aria-hidden="true">
+                    <Fragment set:html={StarSVG} />
+                  </svg>
+                  <span class="text-xs font-bold text-amber-900">{suite.data.rating.toFixed(1)}</span>
+                </div>
+              </div>
+              <p class="text-sm text-gray-600">{suite.data.bedType} · Up to {suite.data.maxGuests} guests · {suite.data.sqft} sq ft</p>
+              <p class="text-sm mt-0.5">
+                <span class="font-bold text-lg" style="font-family: var(--font-display); color: var(--color-primary);">
+                  ₹{suite.data.pricePerNight.toLocaleString('en-IN')}
+                </span>
+                <span class="text-gray-500 text-xs"> / night · No platform fees</span>
+              </p>
+              <p class="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded inline-block self-start mt-1">
+                {suite.data.tagline}
+              </p>
+              <a href={`/properties/${suite.id}`}
+                class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase"
+                style="color: var(--color-accent); font-family: var(--font-display);">
+                View Details & Specs →
+              </a>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       4. FACILITIES — Categorized Architecture, Gym & Spaces
+  ═══════════════════════════════════════════════════════════ -->
+  <section
+    id="gallery"
+    class="py-24"
+    style="background: #F4F6F9;"
+    aria-labelledby="gallery-heading"
+  >
+    <div class="max-w-6xl mx-auto px-6 md:px-10 mb-10">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div>
+          <p class="label-accent mb-2">SHARED BUILDING AMENITIES</p>
+          <h2 id="gallery-heading" class="heading-xl">World-class facilities</h2>
+          <p class="text-sm text-gray-600 mt-2 max-w-xl">
+            Guests enjoy complimentary access to VJ IndiLife’s podium gym, rooftop observation decks, landscaped greens, and resident spaces.
+          </p>
+        </div>
+
+        <!-- Interactive Category Quick Filter Tabs -->
+        <div class="flex flex-wrap gap-2" role="tablist" aria-label="Facility categories">
+          <button class="fac-tab active px-4 py-2 text-xs font-semibold rounded-full transition-all" data-target="all">
+            All ({totalFacilityPhotos})
+          </button>
+          <button class="fac-tab px-4 py-2 text-xs font-semibold rounded-full transition-all" data-target="cat-exterior">
+            Building & Entrance (3)
+          </button>
+          <button class="fac-tab px-4 py-2 text-xs font-semibold rounded-full transition-all" data-target="cat-gym">
+            Gym & Fitness (5)
+          </button>
+          <button class="fac-tab px-4 py-2 text-xs font-semibold rounded-full transition-all" data-target="cat-cafe">
+            Café & Spaces (5)
+          </button>
+          <button class="fac-tab px-4 py-2 text-xs font-semibold rounded-full transition-all" data-target="cat-terrace">
+            Terraces (5)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Facility Sections: Exterior (3-col), Gym (5-bento), Cafeteria (5-bento), Terrace (5-bento) -->
+    <div class="max-w-6xl mx-auto px-6 md:px-10 space-y-16">
+      {facilitySections.map((sec) => (
+        <div id={sec.id} class="fac-section bg-white p-6 md:p-8 rounded-2xl border border-gray-200/80 shadow-sm">
+          <!-- Section Header with Category Badge & Description -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-gray-100 gap-3">
+            <div>
+              <span class="text-[11px] font-bold tracking-widest uppercase text-amber-700 bg-amber-50 px-2.5 py-1 rounded">
+                {sec.tag}
+              </span>
+              <h3 class="text-2xl font-bold mt-2" style="font-family: var(--font-display); color: var(--color-primary);">
+                {sec.title}
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">{sec.description}</p>
+            </div>
+            <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full self-start md:self-auto">
+              {sec.items.length} photos
+            </span>
+          </div>
+
+          <!-- Bento-5 Layout: 1 Hero (2 cols x 2 rows) + 4 Symmetrical Surrounding Cards (2x2) -->
+          {sec.layout === 'bento-5' && (
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {sec.items.map((item, idx) => (
+                <button
+                  type="button"
+                  class={`fac-lightbox-trigger group relative overflow-hidden rounded-xl bg-gray-100 shadow-sm transition-all duration-300 hover:shadow-lg text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50 ${
+                    idx === 0 ? 'col-span-2 row-span-2 aspect-[4/3] md:aspect-auto' : 'aspect-[4/3]'
+                  }`}
+                  data-img={item.img.src}
+                  data-name={item.name}
+                  data-category={sec.title}
+                  aria-label={`View full photo: ${item.name}`}
+                >
+                  <img
+                    src={item.img.src}
+                    alt={item.name}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                    width={item.img.width}
+                    height={item.img.height}
+                  />
+                  <!-- Gradient for readability -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity"></div>
+
+                  <!-- Hover Expand Icon -->
+                  <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/90 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:scale-105 shadow-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                  </div>
+
+                  <!-- Label and Badge -->
+                  <div class="absolute bottom-3 left-3 right-3 text-white">
+                    {idx === 0 && (
+                      <span class="inline-block text-[10px] font-bold tracking-widest uppercase bg-amber-400 text-navy px-1.5 py-0.5 rounded mb-1 shadow-sm font-sans">
+                        FEATURED
+                      </span>
+                    )}
+                    <p class="text-xs md:text-sm font-semibold tracking-wide drop-shadow-sm line-clamp-1">
+                      {item.name}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <!-- Grid-3 Layout: 3 Equal-Width High-Impact Columns -->
+          {sec.layout === 'grid-3' && (
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {sec.items.map((item, idx) => (
+                <button
+                  type="button"
+                  class="fac-lightbox-trigger group relative overflow-hidden rounded-xl bg-gray-100 shadow-sm transition-all duration-300 hover:shadow-lg text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50 aspect-[16/10] md:aspect-[4/3]"
+                  data-img={item.img.src}
+                  data-name={item.name}
+                  data-category={sec.title}
+                  aria-label={`View full photo: ${item.name}`}
+                >
+                  <img
+                    src={item.img.src}
+                    alt={item.name}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                    width={item.img.width}
+                    height={item.img.height}
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity"></div>
+
+                  <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/90 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:scale-105 shadow-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                  </div>
+
+                  <div class="absolute bottom-3 left-3 right-3 text-white">
+                    {idx === 0 && (
+                      <span class="inline-block text-[10px] font-bold tracking-widest uppercase bg-amber-400 text-navy px-1.5 py-0.5 rounded mb-1 shadow-sm font-sans">
+                        MAIN ENTRY
+                      </span>
+                    )}
+                    <p class="text-xs md:text-sm font-semibold tracking-wide drop-shadow-sm line-clamp-1">
+                      {item.name}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <!-- Interactive Facility Photo Lightbox Modal -->
+    <div
+      id="facility-lightbox"
+      class="fixed inset-0 z-[100] bg-black/92 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 flex flex-col justify-between p-4 md:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Facility photo lightbox"
+    >
+      <!-- Top Bar -->
+      <div class="flex items-center justify-between text-white w-full max-w-5xl mx-auto z-10 pt-2">
+        <div>
+          <p id="fl-category" class="text-[11px] font-bold uppercase tracking-widest text-amber-400">AMENITY</p>
+          <h4 id="fl-title" class="text-base md:text-xl font-semibold text-white mt-0.5 drop-shadow-sm">Photo Title</h4>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="fl-counter" class="text-xs text-gray-300 font-mono bg-white/10 px-2.5 py-1 rounded-full">1 / 18</span>
+          <button
+            id="fl-close"
+            type="button"
+            class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Close photo lightbox"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stage -->
+      <div class="relative flex-1 flex items-center justify-center w-full max-w-6xl mx-auto my-3 overflow-hidden">
+        <button
+          id="fl-prev"
+          type="button"
+          class="absolute left-2 md:left-6 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95 cursor-pointer"
+          aria-label="Previous photo"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+
+        <img
+          id="fl-img"
+          src=""
+          alt=""
+          class="max-h-[76vh] md:max-h-[82vh] max-w-[94vw] md:max-w-[88vw] object-contain rounded-xl shadow-2xl transition-all duration-200"
+        />
+
+        <button
+          id="fl-next"
+          type="button"
+          class="absolute right-2 md:right-6 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95 cursor-pointer"
+          aria-label="Next photo"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Footer navigation hints -->
+      <div class="text-center text-xs text-gray-400 w-full z-10 pb-2">
+        <span>Navigate with <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-gray-200 text-[11px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-gray-200 text-[11px]">→</kbd> or swipe · <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-gray-200 text-[11px]">ESC</kbd> to close</span>
+      </div>
+    </div>
+
+    <!-- Client-side script for tab filtering & interactive lightbox -->
+    <script>
+      // Filter tabs logic
+      const tabs = document.querySelectorAll('.fac-tab');
+      const sections = document.querySelectorAll('.fac-section');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const target = tab.getAttribute('data-target');
+          if (target === 'all') {
+            sections.forEach(s => (s as HTMLElement).style.display = 'block');
+          } else {
+            sections.forEach(s => {
+              const el = s as HTMLElement;
+              el.style.display = el.id === target ? 'block' : 'none';
+            });
+          }
+        });
+      });
+
+      // Lightbox logic
+      const triggers = Array.from(document.querySelectorAll<HTMLButtonElement>('.fac-lightbox-trigger'));
+      const lightbox = document.getElementById('facility-lightbox');
+      const flImg = document.getElementById('fl-img') as HTMLImageElement | null;
+      const flCategory = document.getElementById('fl-category');
+      const flTitle = document.getElementById('fl-title');
+      const flCounter = document.getElementById('fl-counter');
+      const flClose = document.getElementById('fl-close');
+      const flPrev = document.getElementById('fl-prev');
+      const flNext = document.getElementById('fl-next');
+
+      let currentIdx = 0;
+
+      function openLightbox(index: number) {
+        if (!lightbox || !flImg || index < 0 || index >= triggers.length) return;
+        currentIdx = index;
+        const trigger = triggers[currentIdx];
+        const src = trigger.getAttribute('data-img') || '';
+        const name = trigger.getAttribute('data-name') || '';
+        const category = trigger.getAttribute('data-category') || '';
+
+        flImg.src = src;
+        flImg.alt = name;
+        if (flTitle) flTitle.textContent = name;
+        if (flCategory) flCategory.textContent = category;
+        if (flCounter) flCounter.textContent = `${currentIdx + 1} / ${triggers.length}`;
+
+        lightbox.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          lightbox.classList.remove('opacity-0');
+        });
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLightbox() {
+        if (!lightbox) return;
+        lightbox.classList.add('opacity-0');
+        setTimeout(() => {
+          lightbox.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 250);
+      }
+
+      function showPrev() {
+        openLightbox((currentIdx - 1 + triggers.length) % triggers.length);
+      }
+
+      function showNext() {
+        openLightbox((currentIdx + 1) % triggers.length);
+      }
+
+      triggers.forEach((trigger, idx) => {
+        trigger.addEventListener('click', () => openLightbox(idx));
+      });
+
+      flClose?.addEventListener('click', closeLightbox);
+      flPrev?.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+      flNext?.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+
+      lightbox?.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+          closeLightbox();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (!lightbox || lightbox.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showPrev();
+        if (e.key === 'ArrowRight') showNext();
+      });
+    </script>
+
+    <style>
+      .fac-tab {
+        background: #ffffff;
+        color: #4B5563;
+        border: 1px solid #E5E7EB;
+      }
+      .fac-tab:hover {
+        background: #F3F4F6;
+        color: #111827;
+      }
+      .fac-tab.active {
+        background: #1A2744 !important;
+        color: #FFFFFF !important;
+        border-color: #1A2744 !important;
+      }
+    </style>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       5. MOOD BREAK
+  ═══════════════════════════════════════════════════════════ -->
+  <MoodBreak />
+
+  <!-- ════════════════════════════════════════════════════════
+       6. ABOUT THE STUDIO — "Designed for people who notice details"
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="py-24 px-6 md:px-10 max-w-6xl mx-auto" aria-labelledby="about-heading">
+    <div class="grid lg:grid-cols-12 gap-12 items-center">
+      <!-- Left: Curated Photo Trio -->
+      <div class="lg:col-span-5 grid grid-cols-2 gap-4">
+        <div class="col-span-2 overflow-hidden rounded-2xl shadow-md aspect-[4/3]">
+          <img
+            src={hillcrestImages[1]?.src || heroImg.src}
+            alt="Main studio living room with sofa and bed"
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div class="overflow-hidden rounded-xl shadow-sm aspect-[4/3]">
+          <img
+            src={hillcrestImages[7]?.src || heroImg.src}
+            alt="Super king bed detail"
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div class="overflow-hidden rounded-xl shadow-sm aspect-[4/3]">
+          <img
+            src={hillcrestImages[6]?.src || heroImg.src}
+            alt="Kitchenette and bar setup"
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      </div>
+
+      <!-- Right: Narrative with Generous UI/UX Spacing -->
+      <div class="lg:col-span-7 flex flex-col justify-center">
+        <p class="label-accent mb-3">ABOUT THE STUDIOS</p>
+        <h2
+          id="about-heading"
+          class="text-3xl md:text-4xl font-bold mb-6 leading-tight"
+          style="font-family: var(--font-display); color: var(--color-foreground);"
+        >
+          Designed for people who notice details.
+        </h2>
+
+        <!-- Spaced Paragraphs with Luxury Reading Typography -->
+        <div class="space-y-5 text-gray-700 text-base leading-relaxed">
+          <p>
+            UrboSuites operates thoughtfully curated studio residences at <strong>VJ IndiLife</strong>, a premier gated development on Pashan Sus Road, Pune. Each suite is designed for seamless transitions between productive deep work and peaceful leisure.
+          </p>
+          <p>
+            Every element was hand-selected: plush navy seating, custom bar-style kitchen with induction cooking, marble-clad rain shower, and a solid wooden Super King bed with premium five-star bedding.
+          </p>
+          <p>
+            Step onto your private terrace to take in the quiet breeze and tree-covered Sahyadri hills. With high-speed 100Mbps dedicated Wi-Fi and quiet corridors, it’s no wonder guests frequently extend their stays.
+          </p>
+        </div>
+
+        <!-- Quick Specs Matrix -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-gray-200">
+          <div>
+            <p class="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">Check-in</p>
+            <p class="text-sm font-bold text-navy mt-1" style="color: var(--color-primary);">01:00 PM</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">Check-out</p>
+            <p class="text-sm font-bold text-navy mt-1" style="color: var(--color-primary);">11:00 AM</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">Min. Stay</p>
+            <p class="text-sm font-bold text-navy mt-1" style="color: var(--color-primary);">1 Night</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold tracking-wider text-gray-400 uppercase">Capacity</p>
+            <p class="text-sm font-bold text-navy mt-1" style="color: var(--color-primary);">Up to 4 Guests</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       7. AMENITIES
+  ═══════════════════════════════════════════════════════════ -->
+  <AmenitiesMatrix />
+
+  <!-- ════════════════════════════════════════════════════════
+       8. REVIEWS (Powered by src/data/testimonials.ts)
+  ═══════════════════════════════════════════════════════════ -->
+  <ReviewsSection />
+
+  <!-- ════════════════════════════════════════════════════════
+       9. FAQS (Targeting Search & AI Queries)
+  ═══════════════════════════════════════════════════════════ -->
+  <FaqSection />
+
+  <!-- ════════════════════════════════════════════════════════
+       10. BOOK
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="book" class="py-24 px-6 md:px-10" aria-labelledby="book-heading">
+    <div class="max-w-5xl mx-auto grid md:grid-cols-5 gap-14 items-start">
+      <!-- Left -->
+      <div class="md:col-span-2">
+        <p class="label-accent mb-3">Reserve your stay</p>
+        <h2 id="book-heading"
+          class="text-4xl font-bold mb-5 leading-tight"
+          style="font-family: var(--font-display); color: var(--color-foreground);"
+        >
+          Book UrboSuites
+        </h2>
+        <p class="text-sm leading-relaxed mb-8" style="color: var(--color-muted-foreground);">
+          Fill in your desired dates and we’ll confirm your reservation within 2 hours. No upfront payment required until confirmed.
+        </p>
+
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-3">
+            <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div>
+              <p class="text-sm font-medium">{ADDRESS.building}</p>
+              <p class="text-xs" style="color: var(--color-muted-foreground);">{ADDRESS.road}, {ADDRESS.city}</p>
+            </div>
+          </div>
+          <a href={CONTACT.phoneTel} class="flex items-center gap-3 text-sm hover:text-amber-600 transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1.23h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            {CONTACT.phone}
+          </a>
+          <a href={CONTACT.emailHref} class="flex items-center gap-3 text-sm hover:text-amber-600 transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            {CONTACT.email}
+          </a>
+          <div class="mt-2 overflow-hidden rounded-xl border border-gray-200">
+            <iframe
+              title="UrboSuites location — VJ IndiLife, Pashan, Pune"
+              src={ADDRESS.mapsEmbed}
+              width="100%"
+              height="200"
+              style="border: 0; display: block;"
+              allowfullscreen
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+            <a href={ADDRESS.mapsUrl} target="_blank" rel="noopener noreferrer"
+              class="flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium bg-gray-50 text-gray-700 hover:text-amber-700 transition-colors">
+              Open in Google Maps →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Booking Form Island -->
+      <div class="md:col-span-3">
+        <BookingWidget client:visible suites={suitesForWidget} />
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+  <MobileStickyBar client:load price={startingPrice} bookHref="/#book" />
+</Layout>

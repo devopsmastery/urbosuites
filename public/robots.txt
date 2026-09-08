@@ -1,0 +1,38 @@
+# robots.txt for UrboSuites (https://urbosuites.in)
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_astro/
+
+# Search Engine & AI Crawler Permissions
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemap Index
+Sitemap: https://urbosuites.in/sitemap-index.xml
+
+# LLM Context Document
+# See: https://llmstxt.org
+# https://urbosuites.in/llms.txt

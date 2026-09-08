@@ -1,0 +1,93 @@
+---
+/**
+ * src/pages/about.astro — About UrboSuites
+ */
+import Layout from '../layouts/Layout.astro';
+import GlobalNav from '../components/astro/GlobalNav.astro';
+import Footer from '../components/astro/Footer.astro';
+import { CONTACT, ADDRESS } from '../lib/constants';
+import { getLodgingBusinessSchema } from '../lib/seo';
+
+const lodgingSchema = getLodgingBusinessSchema();
+---
+
+<Layout
+  title="About UrboSuites — Premium Studio Residences in Pashan, Pune"
+  description="Learn about UrboSuites at VJ IndiLife Building C, Pashan Sus Road, Pune. Thoughtfully designed high-rise studios with Sahyadri mountain views, 100Mbps Wi-Fi, and 24/7 security."
+  keywords="About UrboSuites, UrboSuites Pashan, UrboSuites Pune, VJ IndiLife Building C, Pashan Sus Road serviced apartments, boutique studio rental Pune"
+  schemas={[lodgingSchema]}
+>
+  <GlobalNav currentPath="/about" />
+
+  <!-- Hero Header -->
+  <section class="pt-36 pb-16 px-6 md:px-10" style="background: var(--color-primary);">
+    <div class="max-w-4xl mx-auto text-center">
+      <span class="label-accent mb-3 block">OUR STORY & PHILOSOPHY</span>
+      <h1
+        class="text-white text-4xl md:text-6xl font-bold leading-tight"
+        style="font-family: var(--font-display);"
+      >
+        Urban Living.<br /><span style="color: var(--color-accent);">Forest Views.</span>
+      </h1>
+      <p class="mt-4 text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-white/80">
+        Thoughtfully designed studio apartments at VJ IndiLife, Pashan Sus Road, Pune.
+        Created for people who appreciate calm, craftsmanship, and unblocked natural scenery.
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Narrative -->
+  <section class="py-20 px-6 md:px-10 max-w-4xl mx-auto">
+    <div class="space-y-8 text-gray-700 text-base md:text-lg leading-relaxed">
+      <div class="border-l-4 border-[#C9A227] pl-6 py-1">
+        <p class="text-xl md:text-2xl font-semibold text-navy leading-snug" style="font-family: var(--font-display); color: var(--color-primary);">
+          "We set out to create the exact space we searched for when traveling to Pune: quiet, high-rise, inspiring, and completely self-contained."
+        </p>
+      </div>
+
+      <p>
+        Situated in <strong>VJ IndiLife Building C</strong> along Pashan Sus Road, <strong>UrboSuites</strong> is positioned where Pune’s energetic IT corridor meets the tranquil greenery of the Sahyadri foothills. Just 10 minutes from Baner and 15 minutes from Hinjewadi IT Park, it offers the convenience of quick urban access while maintaining complete residential peace.
+      </p>
+
+      <p>
+        Every studio is tailored for productive deep work and effortless relaxation. We opted for solid wooden Super King beds, 100Mbps dedicated optical fibre connections, ergonomic desk chairs positioned by panoramic windows, inverter air conditioning, and fully equipped induction kitchens.
+      </p>
+
+      <p>
+        Whether you are staying for a weekend getaway, a month-long workation, or visiting Pune for business, our goal is simple: an effortless direct booking experience with zero platform markup, personal host communication, and spaces that feel like home from the moment you unlock the door.
+      </p>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid sm:grid-cols-3 gap-6 mt-16 pt-12 border-t border-gray-200">
+      <div class="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Prime Location</p>
+        <p class="text-xl font-bold mt-1 text-navy" style="font-family: var(--font-display); color: var(--color-primary);">Pashan Sus Road</p>
+        <p class="text-xs text-gray-500 mt-2">15 min to Hinjewadi IT Park · 10 min to Baner · 5 min to Pashan Lake</p>
+      </div>
+      <div class="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Direct Booking</p>
+        <p class="text-xl font-bold mt-1 text-navy" style="font-family: var(--font-display); color: var(--color-primary);">0% Platform Fees</p>
+        <p class="text-xs text-gray-500 mt-2">Book directly with host · 2-hr response · Flexible cancellation</p>
+      </div>
+      <div class="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Verified Stays</p>
+        <p class="text-xl font-bold mt-1 text-navy" style="font-family: var(--font-display); color: var(--color-primary);">4.95 ★ Average</p>
+        <p class="text-xs text-gray-500 mt-2">84+ verified 5-star guest reviews across Airbnb and direct stays</p>
+      </div>
+    </div>
+
+    <!-- CTA Bar -->
+    <div class="mt-14 flex flex-wrap items-center justify-between gap-6 p-8 rounded-2xl bg-[#1A2744] text-white">
+      <div>
+        <h3 class="text-xl font-bold" style="font-family: var(--font-display);">Ready to reserve your stay in Pashan?</h3>
+        <p class="text-xs text-white/70 mt-1">Check availability across Hillcrest and Gulmohar suites.</p>
+      </div>
+      <a href="/#book" class="btn-gold">
+        Check Availability →
+      </a>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
